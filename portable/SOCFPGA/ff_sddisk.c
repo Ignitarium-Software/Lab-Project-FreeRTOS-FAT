@@ -47,6 +47,9 @@
 #include "semphr.h"
 #include "portmacro.h"
 
+/* config generated */
+#include "gen_config.h"
+
 /* FreeRTOS+FAT includes. */
 #include "ff_sddisk.h"
 #include "ff_sys.h"
@@ -56,8 +59,10 @@
 #include "socfpga_sdmmc.h"
 
 /* Tinyusb MSC includes */
-#include "msc_app.h"
-#include "msc_host.h"
+#if (ENABLE_TINYUSB == 1)
+  #include "msc_app.h"
+  #include "msc_host.h"
+#endif
 
 #define sdSIGNATURE                          0x41404342UL
 #define sdHUNDRED_64_BIT                     ( 100ull )
@@ -124,6 +129,7 @@ static BaseType_t xSDCardStatus = pdFALSE;
 static CardDetect_t xCardDetect;
 /*call back process for usb tx starts*/
 
+#if (CONFIG_SDMMC_ISENABLE == 1)
 /*call back process for usb tx ends*/
 int32_t FFReadSdmmc( uint8_t *pucBuffer, uint32_t ulSectorNumber,
         uint32_t ulSectorCount, FF_Disk_t *pxDisk )
@@ -198,8 +204,6 @@ int32_t FFReadSdmmc( uint8_t *pucBuffer, uint32_t ulSectorNumber,
     return lReturnCode;
 }
 
-
-
 int32_t FFWriteSdmmc( uint8_t *pucBuffer, uint32_t ulSectorNumber,
         uint32_t ulSectorCount, FF_Disk_t *pxDisk )
 {
@@ -259,9 +263,9 @@ int32_t FFWriteSdmmc( uint8_t *pucBuffer, uint32_t ulSectorNumber,
 
     return lReturnCode;
 }
+#endif
 
-
-
+#if (ENABLE_TINYUSB == 1)
 int32_t FFReadUsb( uint8_t *pucBuffer, uint32_t ulSectorNumber,
         uint32_t ulSectorCount, FF_Disk_t *pxDisk )
 {
@@ -338,7 +342,7 @@ int32_t FFWriteUsb( uint8_t *pucBuffer, uint32_t ulSectorNumber,
 
         if ( (((size_t) pucBuffer) & (sizeof(size_t) - 1)) == 0 )
         {
-        	usb_result = usb_disk_write(pucBuffer, ulSectorNumber, ulSectorCount);
+            usb_result = usb_disk_write(pucBuffer, ulSectorNumber, ulSectorCount);
         }
         else
         {
@@ -374,6 +378,7 @@ int32_t FFWriteUsb( uint8_t *pucBuffer, uint32_t ulSectorNumber,
 
     return lReturnCode;
 }
+#endif
 /*-----------------------------------------------------------*/
 
 void FF_SDDiskFlush( FF_Disk_t *pxDisk )
@@ -420,13 +425,15 @@ FF_Disk_t* FF_SDDiskInit( const char *pcName , int ulDriveNum)
             pxDisk->ulSignature = sdSIGNATURE;
             if( ulDriveNum >=0)
             {
-            	uint32_t block_count = tuh_msc_get_block_count(1, 0);
-            	/* printf("Block count is : %d \r\n", block_count); */
-            	pxDisk->ulNumberOfSectors = block_count;
+                #if (ENABLE_TINYUSB == 1)
+                    uint32_t block_count = tuh_msc_get_block_count(1, 0);
+                    /* printf("Block count is : %d \r\n", block_count); */
+                    pxDisk->ulNumberOfSectors = block_count;
+                #endif
             }
             else
             {
-            	pxDisk->ulNumberOfSectors = SectorNum;
+                pxDisk->ulNumberOfSectors = SectorNum;
             }
 
             if ( xPlusFATMutex != NULL )
@@ -699,11 +706,13 @@ BaseType_t FF_SDDiskShowPartition( FF_Disk_t *pxDisk )
 static BaseType_t prvSDDetect( void )
 {
     int iReturn;
+#if (CONFIG_SDMMC_ISENABLE == 1)
     if ( sdmmc_is_card_present() == 0 )
     {
         iReturn = pdFALSE;
     }
     else
+#endif
     {
         iReturn = pdTRUE;
     }
@@ -756,6 +765,7 @@ static BaseType_t prvSDMMCInit( BaseType_t xDriveNumber )
 
     if(xDriveNumber == -1)
     {
+#if (CONFIG_SDMMC_ISENABLE == 1)
         if ( xSDCardSemaphore == NULL )
         {
             xSDCardSemaphore = xSemaphoreCreateBinary();
@@ -768,11 +778,12 @@ static BaseType_t prvSDMMCInit( BaseType_t xDriveNumber )
         SD_state = sdmmc_init_card(PtrSectorNum);
         xCardDetect.bLastPresent = pdTRUE;
         xCardDetect.bStableSignal = pdTRUE;
+#endif
         return SD_state == 0 ? 1 : 0;
     }
     else
     {
-    	/*add usb init here*/
+        /*add usb init here*/
         xCardDetect.bLastPresent = pdTRUE;
         xCardDetect.bStableSignal = pdTRUE;
         return pdPASS;

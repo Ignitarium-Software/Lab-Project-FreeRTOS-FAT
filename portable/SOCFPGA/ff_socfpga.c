@@ -17,11 +17,15 @@ int32_t FatReadAbsLayer( uint8_t *pucBuffer, uint32_t ulSectorNumber,
     }
     if( pxDisk->ulDevAddr == -1 )
     {
-        ret = FFReadSdmmc( pucBuffer, ulSectorNumber,ulSectorCount, pxDisk );
+        #if (CONFIG_SDMMC_ISENABLE == 1)
+            ret = FFReadSdmmc( pucBuffer, ulSectorNumber,ulSectorCount, pxDisk );
+        #endif
     }
     else if( pxDisk->ulDevAddr >= 0 )
     {
-        ret = FFReadUsb( pucBuffer, ulSectorNumber,ulSectorCount, pxDisk );
+        #if (ENABLE_TINYUSB == 1)
+            ret = FFReadUsb( pucBuffer, ulSectorNumber,ulSectorCount, pxDisk );
+        #endif
     }
     else
     {
@@ -40,11 +44,15 @@ int32_t FatWriteAbsLayer( uint8_t *pucBuffer, uint32_t ulSectorNumber,
     }
     if( pxDisk->ulDevAddr == -1 )
     {
-        ret = FFWriteSdmmc( pucBuffer, ulSectorNumber,ulSectorCount, pxDisk );
+        #if (CONFIG_SDMMC_ISENABLE == 1)
+            ret = FFWriteSdmmc( pucBuffer, ulSectorNumber,ulSectorCount, pxDisk );
+        #endif
     }
     else if( pxDisk->ulDevAddr >= 0 )
     {
-        ret = FFWriteUsb( pucBuffer, ulSectorNumber,ulSectorCount, pxDisk );
+        #if (ENABLE_TINYUSB == 1)
+            ret = FFWriteUsb( pucBuffer, ulSectorNumber,ulSectorCount, pxDisk );
+        #endif
     }
     else
     {
