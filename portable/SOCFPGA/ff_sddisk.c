@@ -142,7 +142,7 @@ int32_t FFReadSdmmc( uint8_t *pucBuffer, uint32_t ulSectorNumber,
         ullReadAddr = 512ull * (uint64_t) ulSectorNumber;
         if ((((size_t) pucBuffer) & (sizeof(size_t) - 1)) == 0)
         {
-            sd_result = sdmmc_read_block_sync((uint64_t*) pucBuffer, ullReadAddr,
+            sd_result = sdmmc_read_block_sync(ullReadAddr, (uint64_t*) pucBuffer,
                     512ul, ulSectorCount);
         }
         else
@@ -157,8 +157,8 @@ int32_t FFReadSdmmc( uint8_t *pucBuffer, uint32_t ulSectorNumber,
                 {
                     ullReadAddr = 512ull *
                             ((uint64_t) ulSectorNumber + (uint64_t) ulSector);
-                    sd_result = sdmmc_read_block_sync((uint64_t*) pucDMABuffer,
-                            512 * ulSectorNumber, 512ul, ulSectorCount);
+                    sd_result = sdmmc_read_block_sync(ullReadAddr,
+                            (uint64_t*) pucDMABuffer, 512ul, 1);
 
                     if (sd_result == 0)
                     {
@@ -217,7 +217,7 @@ int32_t FFWriteSdmmc( uint8_t *pucBuffer, uint32_t ulSectorNumber,
 
         if ((((size_t) pucBuffer) & (sizeof(size_t) - 1)) == 0)
         {
-            sd_result = sdmmc_write_block_sync((uint64_t*) pucBuffer, ullWriteAddr,
+            sd_result = sdmmc_write_block_sync(ullWriteAddr, (uint64_t*) pucBuffer,
                     512ul, ulSectorCount);
         }
         else
@@ -233,8 +233,8 @@ int32_t FFWriteSdmmc( uint8_t *pucBuffer, uint32_t ulSectorNumber,
                 {
                     memcpy(pucDMABuffer, pucBuffer + 512ul * ulSector, 512ul);
                     ullWriteAddr = 512ull * (ulSectorNumber + ulSector);
-                    sd_result = sdmmc_write_block_sync((uint64_t*) pucDMABuffer,
-                            ullWriteAddr, 512ul, 1);
+                    sd_result = sdmmc_write_block_sync(ullWriteAddr,
+                            (uint64_t*) pucDMABuffer, 512ul, 1);
 
                     if (sd_result != 0)
                     {
